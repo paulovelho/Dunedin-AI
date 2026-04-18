@@ -1,5 +1,8 @@
 # Dunedin AI — Claude Instructions
 
+## Mandatory Rule
+**If any questions are raised, ask me before acting.** This applies to every prompt — if there is ambiguity, missing context, or a decision to be made, pause and ask rather than assume.
+
 ## Project Overview
 Kindle/web highlights manager. Users upload Kindle clipping files, search highlights, and add notes.
 
@@ -25,12 +28,20 @@ cd app && npm install && npm run dev    # Vite dev server
 ```
 
 ## Environment Variables
-Both `api/` and `app/` need:
-- `SUPABASE_URL` — Supabase project URL
-- `SUPABASE_ANON_KEY` — Supabase anonymous/public key
 
-API additionally needs:
-- `SUPABASE_SERVICE_ROLE_KEY` — for server-side operations (file import, etc.)
+Supabase rolled out a new key format (`sb_publishable_...` / `sb_secret_...`)
+that replaces the legacy `anon` / `service_role` JWT keys. New projects use
+the new format; both still work during the transition.
+
+### `app/` (Vite — `VITE_` prefix required to expose to the client)
+- `VITE_SUPABASE_URL` — Supabase project URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` — `sb_publishable_...` (replaces `anon`)
+- `VITE_API_URL` — Express API base URL (default `http://localhost:3000`)
+
+### `api/` (server-only, never expose)
+- `SUPABASE_URL` — Supabase project URL
+- `SUPABASE_PUBLISHABLE_KEY` — `sb_publishable_...`. Used to build per-request, JWT-scoped clients so RLS policies see `auth.uid()`.
+- `SUPABASE_SECRET_KEY` — `sb_secret_...` (replaces `service_role`). Used by the auth middleware to verify JWTs and for admin-only operations that bypass RLS.
 - `PORT` — API port (default 3000)
 
 ## Code Conventions
