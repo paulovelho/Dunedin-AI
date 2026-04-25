@@ -1,7 +1,6 @@
-node_modules
-dist
+src/vendor
 .env
-.env.*
-!.env.example
-npm-debug.log*
-.DS_Store
+storage/uploads/*
+cache/*
+logs/*
+.git

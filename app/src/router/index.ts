@@ -2,14 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
 import SearchView from '../views/SearchView.vue';
 import LoginView from '../views/LoginView.vue';
-import AuthCallbackView from '../views/AuthCallbackView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'search', component: SearchView, meta: { requiresAuth: true } },
     { path: '/login', name: 'login', component: LoginView },
-    { path: '/auth/callback', name: 'auth-callback', component: AuthCallbackView },
   ],
 });
 

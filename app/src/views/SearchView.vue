@@ -2,15 +2,20 @@
 import { onMounted, ref } from 'vue';
 import { api } from '../lib/api';
 
-const me = ref<{ id: string; email: string | null } | null>(null);
+type ApiUser = {
+  id: number;
+  email: string | null;
+  display_name: string | null;
+};
+
+const me = ref<ApiUser | null>(null);
 const error = ref<string | null>(null);
 
 onMounted(async () => {
   try {
     const res = await api('/me');
     if (!res.ok) throw new Error(`API ${res.status}`);
-    const data = await res.json();
-    me.value = data.user;
+    me.value = await res.json();
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'unknown error';
   }
@@ -21,7 +26,9 @@ onMounted(async () => {
   <main>
     <h1>Dunedin AI</h1>
     <p>Search your highlights.</p>
-    <p v-if="me" class="auth">Authenticated as {{ me.email }} ({{ me.id }})</p>
+    <p v-if="me" class="auth">
+      Authenticated as {{ me.display_name || me.email }} (#{{ me.id }})
+    </p>
     <p v-if="error" class="error">API error: {{ error }}</p>
   </main>
 </template>

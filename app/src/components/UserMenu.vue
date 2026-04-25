@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useAuth } from '../composables/useAuth';
 
 const { user, signOut } = useAuth();
+
+const label = computed(() => user.value?.displayName || user.value?.email || '');
 </script>
 
 <template>
   <div v-if="user" class="user-menu">
-    <span class="email">{{ user.email }}</span>
+    <img v-if="user.photoURL" :src="user.photoURL" :alt="label" class="avatar" />
+    <span class="name">{{ label }}</span>
     <button @click="signOut">Sign out</button>
   </div>
 </template>
@@ -18,7 +22,13 @@ const { user, signOut } = useAuth();
   gap: 0.75rem;
   font-size: 0.875rem;
 }
-.email {
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.name {
   color: var(--color-text-muted);
 }
 button {

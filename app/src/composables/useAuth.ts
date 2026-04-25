@@ -1,42 +1,47 @@
 import { ref, computed } from 'vue';
-import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut as fbSignOut,
+  type User,
+} from 'firebase/auth';
+import { auth, googleProvider } from '../lib/firebase';
+import { api } from '../lib/api';
 
-const session = ref<Session | null>(null);
+const currentUser = ref<User | null>(null);
 const loading = ref(true);
 
 let readyPromise: Promise<void> | null = null;
 
 function init(): Promise<void> {
   if (readyPromise) return readyPromise;
-  readyPromise = (async () => {
-    const { data } = await supabase.auth.getSession();
-    session.value = data.session;
-    loading.value = false;
-    supabase.auth.onAuthStateChange((_event, newSession) => {
-      session.value = newSession;
+  readyPromise = new Promise<void>((resolve) => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      currentUser.value = u;
+      loading.value = false;
+      resolve();
     });
-  })();
+    void unsub;
+  });
   return readyPromise;
 }
 
 export function useAuth() {
   init();
 
-  const user = computed<User | null>(() => session.value?.user ?? null);
-  const isAuthenticated = computed(() => !!session.value);
+  const user = computed<User | null>(() => currentUser.value);
+  const isAuthenticated = computed(() => !!currentUser.value);
 
   async function signInWithGoogle() {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    await signInWithPopup(auth, googleProvider);
+    const res = await api('/auth/login', { method: 'POST' });
+    if (!res.ok) throw new Error(`login failed: ${res.status}`);
+    window.location.reload();
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    await fbSignOut(auth);
+    window.location.reload();
   }
 
   function whenReady(): Promise<void> {
@@ -45,7 +50,6 @@ export function useAuth() {
 
   return {
     user,
-    session,
     isAuthenticated,
     loading,
     signInWithGoogle,

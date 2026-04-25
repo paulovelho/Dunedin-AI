@@ -26,6 +26,11 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Supabase
-supabase/.branches/
-supabase/.temp/
+# PHP / Composer
+vendor/
+
+# Archived Node implementation (kept for reference; see api-node/)
+api-node/node_modules/
+api-node/dist/
+api-node/supabase/.branches/
+api-node/supabase/.temp/

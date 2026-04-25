@@ -1,15 +1,16 @@
-import { supabase } from './supabase';
+import { auth } from './firebase';
 
-const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1';
 
 export async function api(path: string, init: RequestInit = {}): Promise<Response> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-
   const headers = new Headers(init.headers);
-  if (token) {
+
+  const user = auth.currentUser;
+  if (user) {
+    const token = await user.getIdToken();
     headers.set('Authorization', `Bearer ${token}`);
   }
+
   if (init.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }

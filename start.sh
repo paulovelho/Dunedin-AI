@@ -6,17 +6,31 @@ cd "$(dirname "$0")"
 API_URL="http://localhost:3000"
 APP_URL="http://localhost:5173"
 TIMEOUT="${TIMEOUT:-300}"
+API_HEALTH="$API_URL/api/v1/health"
 
-echo "==> Pulling images (verbose)..."
-docker compose --progress=plain pull
+VENDOR_AUTOLOAD="api/src/vendor/autoload.php"
+COMPOSER_JSON="api/src/composer.json"
+
+# Install PHP deps on host when missing or out of date. Uses a throwaway
+# composer:2 container so the host doesn't need PHP or ext-pdo_mysql.
+if [ ! -f "$VENDOR_AUTOLOAD" ] || [ "$COMPOSER_JSON" -nt "$VENDOR_AUTOLOAD" ]; then
+  echo "==> Installing PHP dependencies (composer:2 container)..."
+  docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$PWD/api/src:/app" \
+    -w /app \
+    composer:2 \
+    composer install --no-interaction --prefer-dist --no-progress --ignore-platform-reqs
+fi
 
 echo
-echo "==> Starting containers (verbose)..."
-docker compose --progress=plain up -d
+echo "==> Building and starting containers (verbose)..."
+docker compose --progress=plain up -d --build
 
 echo
-echo "==> Waiting for services. Cold start runs 'npm install' inside the"
-echo "    containers and can take 1-2 minutes the first time."
+echo "==> Waiting for services. Cold start builds the PHP image and runs"
+echo "    'npm install' inside the app container; it can take a few"
+echo "    minutes the first time."
 echo
 
 wait_for() {
@@ -36,7 +50,7 @@ wait_for() {
   echo "  [OK] $name ready at $url"
 }
 
-wait_for api "$API_URL/health"
+wait_for api "$API_HEALTH"
 wait_for app "$APP_URL"
 
 cat <<EOF
@@ -45,14 +59,15 @@ cat <<EOF
 Dunedin AI is running:
 
   App:    $APP_URL
-  API:    $API_URL
-  Health: $API_URL/health
+  API:    $API_URL/api/v1
+  Health: $API_HEALTH
+  DB:     mariadb on localhost:3306 (user: dunedin / pass: dunedin / db: dunedin)
 
 Useful commands:
   docker compose logs -f          # tail all logs
   docker compose logs -f api      # tail API only
   docker compose logs -f app      # tail app only
-  docker compose down             # stop containers
-  docker compose down -v          # stop and wipe node_modules cache
+  ./stop.sh                       # stop containers (keep volumes)
+  docker compose down -v          # stop and wipe all volumes
 ============================================================
 EOF
