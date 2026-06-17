@@ -43,7 +43,7 @@ class AuthControl extends MagratheaApiAuth {
         if (!$user) {
             throw new MagratheaApiException("user not found", 404, null, true);
         }
-        return (array)$user->ToJson();
+        return $user->ToArray();
     }
 
     public function ValidateToken(): bool {
@@ -53,11 +53,11 @@ class AuthControl extends MagratheaApiAuth {
         }
 
         try {
-            $verified = $this->verifier()->verifyIdToken($token);
+            $verified = $this->verifier()->verifyIdTokenWithLeeway($token, 60);
         } catch (IdTokenVerificationFailed $e) {
             throw new MagratheaApiException("invalid token", 401, null, true);
         } catch (\Throwable $e) {
-            throw new MagratheaApiException("auth failed: " . $e->getMessage(), 401, null, true);
+            throw new MagratheaApiException("auth failed", 401, null, true);
         }
 
         $payload     = $verified->payload();
@@ -102,6 +102,6 @@ class AuthControl extends MagratheaApiAuth {
         }
         $user->last_login = now();
         $user->Save();
-        return (array)$user->ToJson();
+        return $user->ToArray();
     }
 }

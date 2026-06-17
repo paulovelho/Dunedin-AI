@@ -34,7 +34,7 @@ class NoteApiControl extends MagratheaApiControl {
         $note->date         = now();
         $note->Save();
 
-        return (array)$note->ToJson();
+        return $note->ToArray();
     }
 
     public function Update($params): array {
@@ -54,7 +54,7 @@ class NoteApiControl extends MagratheaApiControl {
         }
         $note->note = $text;
         $note->Save();
-        return (array)$note->ToJson();
+        return $note->ToArray();
     }
 
     public function Delete($params = false): array {

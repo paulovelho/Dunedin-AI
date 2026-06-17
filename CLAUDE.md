@@ -19,6 +19,7 @@ Kindle/web highlights manager. Users upload Kindle clipping files, search highli
 - Highlights are deduplicated via SHA-256 hash of (user_id + text), stored in `highlights.hash` with a `(user_id, hash)` unique index.
 - File import currently supports only Kindle `my_clippings.txt` format (`kindle3` type), but the schema allows future formats. Uploaded files land in `api/storage/uploads/` (local volume).
 - All API routes are mounted under `/api/v1`.
+- **API response shape**: every successful response is `{ "success": true, "data": <payload> }`. When the payload represents a model, `data` is the model's flat field map (i.e. `$model->ToArray()`) — never the MagratheaPHP envelope from `ToJson()` (which wraps fields under an outer `object`/`id`/`created_at`/`updated_at`/`fields` structure). For collections, return an array of `ToArray()` results. Related/nested data is attached as extra keys on the same flat map (e.g. `notes` on a highlight). Frontend code should rely on `response.data` containing the fields directly.
 
 ## Development Commands
 ```bash

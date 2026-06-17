@@ -38,13 +38,13 @@ class FileApiControl extends MagratheaApiControl {
         $file->status   = "pending";
         $file->Save();
 
-        return (array)$file->ToJson();
+        return $file->ToArray();
     }
 
     public function List(): array {
         $userId = AuthControl::SessionUserId();
         $files  = FileControl::GetWhere(["user_id" => $userId]);
-        return array_map(fn($f) => $f->ToJson(), $files);
+        return array_map(fn($f) => $f->ToArray(), $files);
     }
 
     public function Import(array $params = []): array {

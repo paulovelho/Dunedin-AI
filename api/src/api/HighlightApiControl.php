@@ -53,8 +53,8 @@ class HighlightApiControl extends MagratheaApiControl {
 
         $notes = NoteControl::GetWhere(["highlight_id" => $id, "user_id" => $userId]);
 
-        $result = (array)$highlight->ToJson();
-        $result["notes"] = array_map(fn($n) => $n->ToJson(), $notes);
+        $result = $highlight->ToArray();
+        $result["notes"] = array_map(fn($n) => $n->ToArray(), $notes);
         return $result;
     }
 

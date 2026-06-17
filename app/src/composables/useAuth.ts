@@ -16,8 +16,15 @@ let readyPromise: Promise<void> | null = null;
 function init(): Promise<void> {
   if (readyPromise) return readyPromise;
   readyPromise = new Promise<void>((resolve) => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      currentUser.value = u;
+    const unsub = onAuthStateChanged(auth, async (u: User | null) => {
+      if (u && !u.photoURL) {
+        try {
+          await u.reload();
+        } catch (err) {
+          console.warn('[auth] user.reload() failed', err);
+        }
+      }
+      currentUser.value = auth.currentUser;
       loading.value = false;
       resolve();
     });
@@ -33,9 +40,34 @@ export function useAuth() {
   const isAuthenticated = computed(() => !!currentUser.value);
 
   async function signInWithGoogle() {
-    await signInWithPopup(auth, googleProvider);
-    const res = await api('/auth/login', { method: 'POST' });
-    if (!res.ok) throw new Error(`login failed: ${res.status}`);
+    console.log('[auth] signInWithGoogle: opening popup');
+    let cred;
+    try {
+      cred = await signInWithPopup(auth, googleProvider);
+    } catch (err: any) {
+      console.error('[auth] signInWithPopup failed', {
+        code: err?.code,
+        message: err?.message,
+        customData: err?.customData,
+        err,
+      });
+      throw err;
+    }
+    console.log('[auth] popup resolved, uid=', cred.user.uid);
+
+    let res: Response;
+    try {
+      res = await api('/auth/login', { method: 'POST' });
+    } catch (err: any) {
+      console.error('[auth] /auth/login fetch threw', err);
+      throw err;
+    }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '<no body>');
+      console.error('[auth] /auth/login non-ok', { status: res.status, body });
+      throw new Error(`login failed: ${res.status}`);
+    }
+    console.log('[auth] /auth/login ok, reloading');
     window.location.reload();
   }
 
