@@ -1,5 +1,5 @@
 <?php
-namespace App\Api;
+namespace Dunedin;
 
 use Magrathea2\MagratheaApiAuth;
 use Magrathea2\Config;
@@ -9,8 +9,8 @@ use function Magrathea2\now;
 use Kreait\Firebase\JWT\IdTokenVerifier;
 use Kreait\Firebase\JWT\Error\IdTokenVerificationFailed;
 
-use App\Models\User;
-use App\Controls\UserControl;
+use Dunedin\User\User;
+use Dunedin\User\UserControl;
 
 class AuthControl extends MagratheaApiAuth {
 
@@ -71,8 +71,8 @@ class AuthControl extends MagratheaApiAuth {
             $user               = new User();
             $user->firebase_uid = $firebaseUid;
             $user->email        = $email ?? "";
-            $user->display_name = $name;
-            $user->photo_url    = $picture;
+            $user->display_name = $name ?? "";
+            $user->photo_url    = $picture ?? "";
             $user->last_login   = now();
             $user->active       = true;
             $user->status       = "active";

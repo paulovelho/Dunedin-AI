@@ -2,11 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useAuth } from '../composables/useAuth';
 import SearchView from '../views/SearchView.vue';
 import LoginView from '../views/LoginView.vue';
+import UploadView from '../views/UploadView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'search', component: SearchView, meta: { requiresAuth: true } },
+    { path: '/upload', name: 'upload', component: UploadView, meta: { requiresAuth: true } },
     { path: '/login', name: 'login', component: LoginView },
   ],
 });

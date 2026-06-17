@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS files (
   type           VARCHAR(32)     NOT NULL,
   imported_date  DATETIME        NULL,
   status         VARCHAR(32)     NOT NULL DEFAULT 'pending',
+  info           TEXT            NULL,
+  size           BIGINT          NOT NULL DEFAULT 0,
   created_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     DATETIME        NULL,
   PRIMARY KEY (id),

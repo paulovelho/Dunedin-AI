@@ -1,5 +1,5 @@
 <?php
-namespace App\Models;
+namespace Dunedin\File;
 
 use Magrathea2\MagratheaModel;
 
@@ -13,16 +13,20 @@ class File extends MagratheaModel {
         "type"          => "string",
         "imported_date" => "datetime",
         "status"        => "string",
+        "info"          => "string",
+        "size"          => "int",
         "created_at"    => "datetime",
         "updated_at"    => "datetime",
     ];
 
-    public ?int    $id            = null;
-    public ?int    $user_id       = null;
-    public ?string $filename      = null;
-    public ?string $type          = null;
+    public int     $id            = 0;
+    public int     $user_id       = 0;
+    public string  $filename      = "";
+    public string  $type          = "";
     public ?string $imported_date = null;
-    public ?string $status        = null;
-    public ?string $created_at    = null;
-    public ?string $updated_at    = null;
+    public string  $status        = "";
+    public ?string $info          = null;
+    public int     $size          = 0;
+    public string  $created_at    = "";
+    public string  $updated_at    = "";
 }

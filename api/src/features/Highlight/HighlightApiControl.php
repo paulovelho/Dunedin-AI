@@ -1,13 +1,13 @@
 <?php
-namespace App\Api;
+namespace Dunedin\Highlight;
 
 use Magrathea2\MagratheaApiControl;
 use Magrathea2\Exceptions\MagratheaApiException;
 use Magrathea2\DB\Query;
 use Magrathea2\DB\Database;
 
-use App\Controls\HighlightControl;
-use App\Controls\NoteControl;
+use Dunedin\AuthControl;
+use Dunedin\Note\NoteControl;
 
 class HighlightApiControl extends MagratheaApiControl {
 
@@ -20,10 +20,10 @@ class HighlightApiControl extends MagratheaApiControl {
         $limit  = min(100, max(1, (int)($_GET["limit"] ?? 50)));
         $offset = ($page - 1) * $limit;
 
-        $where = "user_id = ".$userId;
-        if ($q)      $where .= " AND text   LIKE '%".Query::Clean($q)."%'";
-        if ($author) $where .= " AND author LIKE '%".Query::Clean($author)."%'";
-        if ($origin) $where .= " AND origin = '".Query::Clean($origin)."'";
+        $where = "user_id = " . $userId;
+        if ($q)      $where .= " AND text   LIKE '%" . Query::Clean($q)      . "%'";
+        if ($author) $where .= " AND author LIKE '%" . Query::Clean($author) . "%'";
+        if ($origin) $where .= " AND origin = '"     . Query::Clean($origin) . "'";
 
         $sql = Query::Select()
             ->Table("highlights")
@@ -51,8 +51,7 @@ class HighlightApiControl extends MagratheaApiControl {
             throw new MagratheaApiException("not found", 404);
         }
 
-        $notes = NoteControl::GetWhere(["highlight_id" => $id, "user_id" => $userId]);
-
+        $notes  = NoteControl::GetWhere(["highlight_id" => $id, "user_id" => $userId]);
         $result = $highlight->ToArray();
         $result["notes"] = array_map(fn($n) => $n->ToArray(), $notes);
         return $result;

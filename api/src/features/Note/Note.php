@@ -1,5 +1,5 @@
 <?php
-namespace App\Models;
+namespace Dunedin\Note;
 
 use Magrathea2\MagratheaModel;
 
@@ -16,11 +16,11 @@ class Note extends MagratheaModel {
         "updated_at"   => "datetime",
     ];
 
-    public ?int    $id           = null;
-    public ?int    $highlight_id = null;
-    public ?int    $user_id      = null;
-    public ?string $note         = null;
-    public ?string $date         = null;
-    public ?string $created_at   = null;
-    public ?string $updated_at   = null;
+    public int    $id           = 0;
+    public int    $highlight_id = 0;
+    public int    $user_id      = 0;
+    public string $note         = "";
+    public string $date         = "";
+    public string $created_at   = "";
+    public string $updated_at   = "";
 }

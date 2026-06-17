@@ -1,5 +1,5 @@
 <?php
-namespace App\Models;
+namespace Dunedin\Highlight;
 
 use Magrathea2\MagratheaModel;
 
@@ -18,13 +18,13 @@ class Highlight extends MagratheaModel {
         "updated_at" => "datetime",
     ];
 
-    public ?int    $id         = null;
-    public ?int    $user_id    = null;
-    public ?string $text       = null;
-    public ?string $origin     = null;
-    public ?string $author     = null;
-    public ?string $date       = null;
-    public ?string $hash       = null;
-    public ?string $created_at = null;
-    public ?string $updated_at = null;
+    public int    $id         = 0;
+    public int    $user_id    = 0;
+    public string $text       = "";
+    public string $origin     = "";
+    public string $author     = "";
+    public string $date       = "";
+    public string $hash       = "";
+    public string $created_at = "";
+    public string $updated_at = "";
 }

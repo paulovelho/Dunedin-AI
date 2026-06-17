@@ -3,6 +3,11 @@
 ## Mandatory Rule
 **If any questions are raised, ask me before acting.** This applies to every prompt — if there is ambiguity, missing context, or a decision to be made, pause and ask rather than assume.
 
+## General Behavior
+
+- If any questions are raised, ask me before acting.
+- **ALWAYS ask for explicit permission before editing, creating, or deleting any file.** Present your plan and wait for approval before making any file changes.
+
 ## Project Overview
 Kindle/web highlights manager. Users upload Kindle clipping files, search highlights, and add notes.
 

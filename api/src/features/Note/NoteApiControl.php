@@ -1,13 +1,12 @@
 <?php
-namespace App\Api;
+namespace Dunedin\Note;
 
 use Magrathea2\MagratheaApiControl;
 use Magrathea2\Exceptions\MagratheaApiException;
 use function Magrathea2\now;
 
-use App\Controls\HighlightControl;
-use App\Controls\NoteControl;
-use App\Models\Note;
+use Dunedin\AuthControl;
+use Dunedin\Highlight\HighlightControl;
 
 class NoteApiControl extends MagratheaApiControl {
 
@@ -27,7 +26,7 @@ class NoteApiControl extends MagratheaApiControl {
             throw new MagratheaApiException("note is required", 400);
         }
 
-        $note = new Note();
+        $note               = new Note();
         $note->highlight_id = $highlightId;
         $note->user_id      = $userId;
         $note->note         = $text;
@@ -37,7 +36,7 @@ class NoteApiControl extends MagratheaApiControl {
         return $note->ToArray();
     }
 
-    public function Update($params): array {
+    public function Update($params = false): array {
         if (!is_array($params)) $params = [];
         $userId = AuthControl::SessionUserId();
         $id     = (int)($params["id"] ?? 0);

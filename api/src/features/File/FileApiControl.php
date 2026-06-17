@@ -1,11 +1,10 @@
 <?php
-namespace App\Api;
+namespace Dunedin\File;
 
 use Magrathea2\MagratheaApiControl;
 use Magrathea2\Exceptions\MagratheaApiException;
 
-use App\Controls\FileControl;
-use App\Models\File;
+use Dunedin\AuthControl;
 
 class FileApiControl extends MagratheaApiControl {
 
@@ -20,13 +19,13 @@ class FileApiControl extends MagratheaApiControl {
 
         $original = basename($_FILES["file"]["name"]);
         $safe     = preg_replace('/[^A-Za-z0-9._-]/', '_', $original);
-        $stored   = time()."_".bin2hex(random_bytes(6))."_".$safe;
+        $stored   = time() . "_" . bin2hex(random_bytes(6)) . "_" . $safe;
 
         if (!is_dir(self::UPLOAD_DIR)) {
             mkdir(self::UPLOAD_DIR, 0775, true);
         }
 
-        $target = self::UPLOAD_DIR.'/'.$stored;
+        $target = self::UPLOAD_DIR . '/' . $stored;
         if (!move_uploaded_file($_FILES["file"]["tmp_name"], $target)) {
             throw new MagratheaApiException("failed to save file", 500);
         }
@@ -36,6 +35,7 @@ class FileApiControl extends MagratheaApiControl {
         $file->filename = $stored;
         $file->type     = "kindle3";
         $file->status   = "pending";
+        $file->size     = (int)$_FILES["file"]["size"];
         $file->Save();
 
         return $file->ToArray();
@@ -47,7 +47,8 @@ class FileApiControl extends MagratheaApiControl {
         return array_map(fn($f) => $f->ToArray(), $files);
     }
 
-    public function Import(array $params = []): array {
+    public function Import($params = false): array {
+        if (!is_array($params)) $params = [];
         $userId = AuthControl::SessionUserId();
         $id     = (int)($params["id"] ?? 0);
 
