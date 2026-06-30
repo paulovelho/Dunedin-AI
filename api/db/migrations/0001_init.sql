@@ -1,5 +1,5 @@
 -- Dunedin AI initial schema (MariaDB)
--- Tables: users, highlights, notes, files
+-- Tables: users, files, imports, highlights, notes
 -- Auth: Firebase-managed; users.firebase_uid is the link to Firebase Authentication
 
 SET NAMES utf8mb4;
@@ -20,12 +20,43 @@ CREATE TABLE IF NOT EXISTS users (
   KEY users_email_idx (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS files (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id        BIGINT UNSIGNED NOT NULL,
+  filename       VARCHAR(512)    NOT NULL,
+  type           VARCHAR(32)     NOT NULL,
+  status         VARCHAR(32)     NOT NULL DEFAULT 'active',
+  size           BIGINT          NOT NULL DEFAULT 0,
+  created_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME        NULL,
+  PRIMARY KEY (id),
+  KEY files_user_idx (user_id),
+  CONSTRAINT files_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT files_type_ck CHECK (type IN ('kindle3'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS imports (
+  id               BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  file_id          BIGINT UNSIGNED NOT NULL,
+  status           VARCHAR(32)     NOT NULL DEFAULT 'pending',
+  highlight_count  INT             NOT NULL DEFAULT 0,
+  execution_time   INT             NOT NULL DEFAULT 0,
+  info             TEXT            NULL,
+  imported_date    DATETIME        NULL,
+  created_at       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY imports_file_idx (file_id),
+  CONSTRAINT imports_file_fk FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS highlights (
   id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   user_id     BIGINT UNSIGNED NOT NULL,
+  import_id   BIGINT UNSIGNED NULL,
   text        TEXT            NOT NULL,
   origin      VARCHAR(32)     NOT NULL,
   author      VARCHAR(512)    NULL,
+  title       VARCHAR(512)    NULL,
   date        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   hash        CHAR(64)        NOT NULL,
   created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -33,8 +64,11 @@ CREATE TABLE IF NOT EXISTS highlights (
   PRIMARY KEY (id),
   UNIQUE KEY highlights_user_hash_uk (user_id, hash),
   KEY highlights_user_idx (user_id),
+  KEY highlights_import_idx (import_id),
   KEY highlights_author_idx (author),
-  CONSTRAINT highlights_user_fk   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  KEY highlights_title_idx (title),
+  CONSTRAINT highlights_user_fk   FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+  CONSTRAINT highlights_import_fk FOREIGN KEY (import_id) REFERENCES imports(id) ON DELETE SET NULL,
   CONSTRAINT highlights_origin_ck CHECK (origin IN ('kindle','web','twitter'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -51,21 +85,4 @@ CREATE TABLE IF NOT EXISTS notes (
   KEY notes_user_idx (user_id),
   CONSTRAINT notes_highlight_fk FOREIGN KEY (highlight_id) REFERENCES highlights(id) ON DELETE CASCADE,
   CONSTRAINT notes_user_fk      FOREIGN KEY (user_id)      REFERENCES users(id)      ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS files (
-  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  user_id        BIGINT UNSIGNED NOT NULL,
-  filename       VARCHAR(512)    NOT NULL,
-  type           VARCHAR(32)     NOT NULL,
-  imported_date  DATETIME        NULL,
-  status         VARCHAR(32)     NOT NULL DEFAULT 'pending',
-  info           TEXT            NULL,
-  size           BIGINT          NOT NULL DEFAULT 0,
-  created_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at     DATETIME        NULL,
-  PRIMARY KEY (id),
-  KEY files_user_idx (user_id),
-  CONSTRAINT files_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  CONSTRAINT files_type_ck CHECK (type IN ('kindle3'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

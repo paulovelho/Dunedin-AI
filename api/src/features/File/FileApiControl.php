@@ -5,6 +5,8 @@ use Magrathea2\MagratheaApiControl;
 use Magrathea2\Exceptions\MagratheaApiException;
 
 use Dunedin\AuthControl;
+use Dunedin\Import\Import;
+use Dunedin\Import\ImportControl;
 
 class FileApiControl extends MagratheaApiControl {
 
@@ -47,6 +49,20 @@ class FileApiControl extends MagratheaApiControl {
         return array_map(fn($f) => $f->ToArray(), $files);
     }
 
+    public function GetImport($params = false): ?array {
+        if (!is_array($params)) $params = [];
+        $userId = AuthControl::SessionUserId();
+        $id     = (int)($params["id"] ?? 0);
+
+        $file = FileControl::GetRowWhere(["id" => $id, "user_id" => $userId]);
+        if (!$file) {
+            throw new MagratheaApiException("file not found", 404);
+        }
+
+        $import = ImportControl::GetRowWhere(["file_id" => $id]);
+        return $import ? $import->ToArray() : null;
+    }
+
     public function Import($params = false): array {
         if (!is_array($params)) $params = [];
         $userId = AuthControl::SessionUserId();
@@ -57,6 +73,7 @@ class FileApiControl extends MagratheaApiControl {
             throw new MagratheaApiException("file not found", 404);
         }
 
-        throw new MagratheaApiException("import not yet implemented", 501);
+        $import = ImportControl::ProcessFile($file);
+        return $import->ToArray();
     }
 }

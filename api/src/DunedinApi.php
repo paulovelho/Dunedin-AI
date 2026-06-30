@@ -47,8 +47,9 @@ class DunedinApi extends MagratheaApi {
 
     private function Files() {
         $api = new FileApiControl();
-        $this->Add("POST", "files/upload",    $api, "Upload", true);
-        $this->Add("GET",  "files",           $api, "List",   true);
-        $this->Add("POST", "files/:id/import", $api, "Import", true);
+        $this->Add("POST", "files/upload",      $api, "Upload",    true);
+        $this->Add("GET",  "files",             $api, "List",      true);
+        $this->Add("GET",  "files/:id/import",  $api, "GetImport", true);
+        $this->Add("POST", "files/:id/import",  $api, "Import",    true);
     }
 }
