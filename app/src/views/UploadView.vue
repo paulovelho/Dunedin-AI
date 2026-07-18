@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import FileUploader from '../components/FileUploader.vue';
+import FileList from '../components/File/FileList.vue';
 </script>
 
 <template>
   <main class="upload-page">
-    <FileUploader />
+    <FileList />
   </main>
 </template>
 

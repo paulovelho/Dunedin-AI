@@ -9,6 +9,7 @@ use Dunedin\User\UserAdmin;
 use Dunedin\Highlight\HighlightAdmin;
 use Dunedin\Note\NoteAdmin;
 use Dunedin\File\FileAdmin;
+use Dunedin\Import\ImportAdmin;
 
 class DunedinAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\iAdmin {
 
@@ -50,6 +51,8 @@ class DunedinAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\
         $this->AddCrudFeature(new HighlightAdmin());
         $this->AddCrudFeature(new NoteAdmin());
         $this->AddCrudFeature(new FileAdmin());
+        $this->features["imports"] = new ImportAdmin();
+        $this->AddFeature($this->features["imports"]);
     }
 
     public function BuildMenu(): AdminMenu {
@@ -62,6 +65,7 @@ class DunedinAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\
 
         $menu->Add($menu->CreateTitle("Data"));
         $this->AddFeaturesMenu($menu);
+        $menu->Add($this->features["imports"]->GetMenuItem());
 
         $menu->Add(["title" => "Magrathea", "type" => "main"]);
         $this->AddMagratheaMenu($menu);

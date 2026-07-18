@@ -120,7 +120,7 @@ onBeforeUnmount(() => {
           </section>
 
           <nav class="drawer-nav" aria-label="Account">
-            <RouterLink class="nav-item" to="/upload" @click="closeDrawer">Upload clippings</RouterLink>
+            <RouterLink class="nav-item" to="/upload" @click="closeDrawer">My files</RouterLink>
             <a class="nav-item disabled" aria-disabled="true">Settings</a>
             <a class="nav-item disabled" aria-disabled="true">About</a>
           </nav>

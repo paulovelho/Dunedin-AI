@@ -1,7 +1,7 @@
 <?php
 use Magrathea2\Admin\AdminManager;
 
-require __DIR__ . '/inc.php';
+require __DIR__ . '/../inc.php';
 
 try {
     AdminManager::Instance()->Start(new \Dunedin\DunedinAdmin());

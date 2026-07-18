@@ -11,9 +11,7 @@ class File extends MagratheaModel {
         "user_id"       => "int",
         "filename"      => "string",
         "type"          => "string",
-        "imported_date" => "datetime",
         "status"        => "string",
-        "info"          => "string",
         "size"          => "int",
         "created_at"    => "datetime",
         "updated_at"    => "datetime",
@@ -23,9 +21,7 @@ class File extends MagratheaModel {
     public int     $user_id       = 0;
     public string  $filename      = "";
     public string  $type          = "";
-    public ?string $imported_date = null;
     public string  $status        = "";
-    public ?string $info          = null;
     public int     $size          = 0;
     public string  $created_at    = "";
     public string  $updated_at    = "";
