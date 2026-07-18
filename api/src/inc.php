@@ -9,6 +9,8 @@ $mag->appRoot = __DIR__;
 $mag->magRoot = __DIR__;
 $mag->AddCodeFolder(
         __DIR__,
+        __DIR__ . '/admin',
+        __DIR__ . '/admin/Swagger',
         __DIR__ . '/features/User',
         __DIR__ . '/features/Highlight',
         __DIR__ . '/features/Note',
