@@ -1,5 +1,5 @@
 -- Dunedin AI initial schema (MariaDB)
--- Tables: users, files, imports, highlights, notes
+-- Tables: users, files, imports, highlights, notes, shared_links, shared_link_highlights
 -- Auth: Firebase-managed; users.firebase_uid is the link to Firebase Authentication
 
 SET NAMES utf8mb4;
@@ -85,4 +85,34 @@ CREATE TABLE IF NOT EXISTS notes (
   KEY notes_user_idx (user_id),
   CONSTRAINT notes_highlight_fk FOREIGN KEY (highlight_id) REFERENCES highlights(id) ON DELETE CASCADE,
   CONSTRAINT notes_user_fk      FOREIGN KEY (user_id)      REFERENCES users(id)      ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS shared_links (
+  id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id       BIGINT UNSIGNED NOT NULL,
+  uuid          CHAR(36)        NOT NULL,
+  active        TINYINT(1)      NOT NULL DEFAULT 1,
+  description   VARCHAR(120)    NOT NULL,
+  visits        BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  expire        DATETIME        NULL,
+  created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME        NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY shared_links_uuid_uk (uuid),
+  KEY shared_links_user_idx (user_id),
+  CONSTRAINT shared_links_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS shared_link_highlights (
+  id              BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  shared_link_id  BIGINT UNSIGNED NOT NULL,
+  highlight_id    BIGINT UNSIGNED NOT NULL,
+  created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME        NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY shared_link_highlights_link_highlight_uk (shared_link_id, highlight_id),
+  KEY shared_link_highlights_link_idx (shared_link_id),
+  KEY shared_link_highlights_highlight_idx (highlight_id),
+  CONSTRAINT shared_link_highlights_link_fk      FOREIGN KEY (shared_link_id) REFERENCES shared_links(id) ON DELETE CASCADE,
+  CONSTRAINT shared_link_highlights_highlight_fk FOREIGN KEY (highlight_id)  REFERENCES highlights(id)   ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

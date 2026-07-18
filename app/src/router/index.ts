@@ -3,12 +3,16 @@ import { useAuth } from '../composables/useAuth';
 import SearchView from '../views/SearchView.vue';
 import LoginView from '../views/LoginView.vue';
 import UploadView from '../views/UploadView.vue';
+import SharedLinksView from '../views/SharedLinksView.vue';
+import SharedPublicView from '../views/SharedPublicView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'search', component: SearchView, meta: { requiresAuth: true } },
     { path: '/upload', name: 'upload', component: UploadView, meta: { requiresAuth: true } },
+    { path: '/shared-links', name: 'shared-links', component: SharedLinksView, meta: { requiresAuth: true } },
+    { path: '/shared/:uuid', name: 'shared-public', component: SharedPublicView },
     { path: '/login', name: 'login', component: LoginView },
   ],
 });

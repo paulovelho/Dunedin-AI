@@ -125,3 +125,12 @@ dunedin-ai/
 4. Test auth flow: register, login, logout
 5. Upload a Kindle clippings file and verify highlights appear in search
 6. Add a note to a highlight, verify it persists
+
+### Phase 6: Sharing highlights (delivered, PHP/MariaDB stack)
+Implemented after the PHP/MariaDB migration described in `CLAUDE.md`; the API/frontend details below reflect the actual stack, not the Node/Supabase plan above.
+
+- **Database**: `shared_links` (`uuid`, `active`, `description`, `visits`, `expire`) + join table `shared_link_highlights` (both `ON DELETE CASCADE`), added directly to `api/db/migrations/schema.sql`
+- **API** (`api/src/features/SharedLink/`): authenticated `GET/POST /shared-links`, `PUT/DELETE /shared-links/:id`; public (no auth) `GET /shared/:uuid`, `POST /shared/:uuid/visit`. Ownership of every highlight is validated on create; not-found and not-owned both return 404 (never 403, to avoid leaking existence of other users' records — see `CLAUDE.md`)
+- **Tests**: `api/src/tests/` (PHPUnit via the vendored `phpunit.phar`, DB mocked)
+- **Frontend**: share icon on `HighlightItem.vue` (single highlight) and a "Share list" button on `HighlightList.vue` (currently-loaded highlights, with a confirmation if more results exist server-side than are loaded); `ShareModal.vue` for creating a link; `SharedLinksView.vue` (`/shared-links`, linked from the user drawer menu) to manage existing links (copy/activate/deactivate/delete); `SharedPublicView.vue` (`/shared/:uuid`, no auth) to view a shared link publicly, reusing `HighlightItem.vue` in a `public` mode that strips interactive elements
+- **Not built**: sharing notes alongside highlights (deferred — see `CLAUDE.md`), and expiring links via the `expire` column (schema supports it, no UI/logic wired up yet)

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 interface Highlight {
-  id: number;
+  id?: number;
   text: string;
   author: string;
   origin: string;
@@ -8,7 +8,11 @@ interface Highlight {
   date: string;
 }
 
-defineProps<{ highlight: Highlight }>();
+withDefaults(defineProps<{ highlight: Highlight; public?: boolean }>(), {
+  public: false,
+});
+
+const emit = defineEmits<{ 'author-click': [author: string]; share: [] }>();
 
 function formatDate(iso: string) {
   if (!iso) return '';
@@ -20,10 +24,29 @@ function formatDate(iso: string) {
   <article class="highlight-panel">
     <p class="highlight-text">{{ highlight.text }}</p>
     <div class="highlight-meta">
-      <span v-if="highlight.author" class="meta-author">{{ highlight.author }}</span>
+      <span
+        v-if="highlight.author"
+        class="meta-author"
+        :class="{ 'meta-author-static': $props.public }"
+        @click="!$props.public && emit('author-click', highlight.author)"
+      >{{ highlight.author }}</span>
       <span v-if="highlight.title" class="meta-title">{{ highlight.title }}</span>
       <span class="status-badge" :class="`status-${highlight.origin}`">{{ highlight.origin }}</span>
       <span class="meta-date">{{ formatDate(highlight.date) }}</span>
+      <button
+        v-if="!$props.public"
+        type="button"
+        class="btn-share"
+        aria-label="Share this highlight"
+        @click="emit('share')"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <circle cx="6" cy="12" r="2.5" stroke="currentColor" stroke-width="1.6" fill="none" />
+          <circle cx="18" cy="6" r="2.5" stroke="currentColor" stroke-width="1.6" fill="none" />
+          <circle cx="18" cy="18" r="2.5" stroke="currentColor" stroke-width="1.6" fill="none" />
+          <path d="M8.2 10.8L15.8 7.2M8.2 13.2L15.8 16.8" stroke="currentColor" stroke-width="1.6" />
+        </svg>
+      </button>
     </div>
   </article>
 </template>
@@ -58,6 +81,32 @@ function formatDate(iso: string) {
 .meta-author {
   font-weight: 600;
   color: var(--color-purple);
+  cursor: pointer;
+}
+.meta-author:hover {
+  text-decoration: underline;
+}
+.meta-author-static {
+  cursor: default;
+}
+.meta-author-static:hover {
+  text-decoration: none;
+}
+
+.btn-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.15rem;
+  border-radius: 6px;
+}
+.btn-share:hover {
+  color: var(--color-purple);
+  background: var(--color-bg);
 }
 
 .meta-title {

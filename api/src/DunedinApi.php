@@ -7,6 +7,8 @@ use Magrathea2\Config;
 use Dunedin\Highlight\HighlightApiControl;
 use Dunedin\Note\NoteApiControl;
 use Dunedin\File\FileApiControl;
+use Dunedin\SharedLink\SharedLinkApiControl;
+use Dunedin\SharedLink\SharedLinkPublicApiControl;
 
 class DunedinApi extends MagratheaApi {
 
@@ -21,6 +23,7 @@ class DunedinApi extends MagratheaApi {
         $this->Highlights();
         $this->Notes();
         $this->Files();
+        $this->SharedLinks();
     }
 
     private function SetAuth() {
@@ -52,5 +55,18 @@ class DunedinApi extends MagratheaApi {
         $this->Add("GET",  "files",             $api, "List",      true);
         $this->Add("GET",  "files/:id/import",  $api, "GetImport", true);
         $this->Add("POST", "files/:id/import",  $api, "Import",    true);
+    }
+
+    private function SharedLinks() {
+        $api       = new SharedLinkApiControl();
+        $publicApi = new SharedLinkPublicApiControl();
+
+        $this->Add("GET",    "shared-links",     $api, "List",   true);
+        $this->Add("POST",   "shared-links",     $api, "Create", true);
+        $this->Add("PUT",    "shared-links/:id", $api, "Update", true);
+        $this->Add("DELETE", "shared-links/:id", $api, "Delete", true);
+
+        $this->Add("GET",  "shared/:uuid",        $publicApi, "Read");
+        $this->Add("POST", "shared/:uuid/visit",  $publicApi, "Visit");
     }
 }

@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue';
 import { api } from '../../lib/api';
 import HighlightItem from './HighlightItem.vue';
+import ShareModal from '../SharedLink/ShareModal.vue';
 
 interface Highlight {
   id: number;
@@ -20,6 +21,7 @@ interface SearchResult {
 }
 
 const props = defineProps<{ q: string; author: string }>();
+const emit = defineEmits<{ 'author-click': [author: string] }>();
 
 const highlights = ref<Highlight[]>([]);
 const total = ref(0);
@@ -69,6 +71,22 @@ function onCountChange() {
   search(true);
 }
 
+const shareModalIds = ref<number[] | null>(null);
+
+function shareOne(id: number) {
+  shareModalIds.value = [id];
+}
+
+function shareList() {
+  if (highlights.value.length < total.value) {
+    const proceed = confirm(
+      `Only the ${highlights.value.length} loaded highlights (out of ${total.value}) will be shared. Continue?`
+    );
+    if (!proceed) return;
+  }
+  shareModalIds.value = highlights.value.map((h) => h.id);
+}
+
 defineExpose({ search });
 
 onMounted(() => search(true));
@@ -79,21 +97,40 @@ watch(() => [props.q, props.author], () => search(true));
   <div class="highlight-list">
     <div v-if="highlights.length || loading" class="list-header">
       <span class="result-count">{{ total }} result{{ total === 1 ? '' : 's' }}</span>
-      <label class="page-size">
-        Show
-        <select v-model.number="count" @change="onCountChange">
-          <option :value="20">20</option>
-          <option :value="50">50</option>
-          <option :value="100">100</option>
-        </select>
-      </label>
+      <div class="list-header-actions">
+        <button
+          v-if="highlights.length"
+          type="button"
+          class="btn-share-list"
+          aria-label="Share this list of highlights"
+          @click="shareList"
+        >
+          Share list
+        </button>
+        <label class="page-size">
+          Show
+          <select v-model.number="count" @change="onCountChange">
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+        </label>
+      </div>
     </div>
 
     <p v-if="error" class="error">API error: {{ error }}</p>
 
     <div class="results">
-      <HighlightItem v-for="h in highlights" :key="h.id" :highlight="h" />
+      <HighlightItem
+        v-for="h in highlights"
+        :key="h.id"
+        :highlight="h"
+        @author-click="emit('author-click', $event)"
+        @share="shareOne(h.id)"
+      />
     </div>
+
+    <ShareModal v-if="shareModalIds" :highlight-ids="shareModalIds" @close="shareModalIds = null" />
 
     <p v-if="!loading && !highlights.length && !error" class="empty-state">
       No highlights found.
@@ -134,6 +171,28 @@ watch(() => [props.q, props.author], () => search(true));
   font-family: inherit;
   color: var(--color-text);
   background: var(--color-surface);
+}
+
+.list-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.btn-share-list {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--color-purple);
+  background: transparent;
+  color: var(--color-purple);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-share-list:hover {
+  background: var(--color-purple);
+  color: var(--color-surface);
 }
 
 .results {

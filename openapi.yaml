@@ -79,6 +79,47 @@ components:
         created_at:    { type: string, format: date-time }
         updated_at:    { type: string, format: date-time }
 
+    SharedLink:
+      type: object
+      properties:
+        id:          { type: integer }
+        user_id:     { type: integer }
+        uuid:        { type: string, format: uuid }
+        active:      { type: boolean }
+        description: { type: string, maxLength: 120 }
+        visits:      { type: integer }
+        expire:      { type: string, format: date-time, nullable: true }
+        created_at:  { type: string, format: date-time }
+        updated_at:  { type: string, format: date-time }
+
+    SharedLinkWithCount:
+      allOf:
+        - $ref: "#/components/schemas/SharedLink"
+        - type: object
+          properties:
+            highlights_count: { type: integer }
+
+    SharedHighlight:
+      description: Public-facing highlight fields only (no id, user_id, or internal metadata)
+      type: object
+      properties:
+        text:   { type: string }
+        origin: { type: string }
+        author: { type: string }
+        title:  { type: string }
+        date:   { type: string, format: date-time }
+
+    PublicSharedLink:
+      type: object
+      properties:
+        uuid:        { type: string, format: uuid }
+        description: { type: string }
+        visits:      { type: integer }
+        created_at:  { type: string, format: date-time }
+        highlights:
+          type: array
+          items: { $ref: "#/components/schemas/SharedHighlight" }
+
     SuccessEnvelope:
       type: object
       required: [success, data]
@@ -424,6 +465,178 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "501":
           description: Not yet implemented
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /shared-links:
+    get:
+      summary: List the authenticated user's shared links
+      tags: [SharedLinks]
+      responses:
+        "200":
+          description: Array of shared links, each with its highlight count
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/SharedLinkWithCount" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+    post:
+      summary: Share one or more highlights (must all belong to the authenticated user)
+      tags: [SharedLinks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [highlight_ids]
+              properties:
+                highlight_ids:
+                  type: array
+                  items: { type: integer }
+                description:
+                  type: string
+                  description: Optional; auto-generated from the highlight text (single) or "list of N items" (multiple) when omitted, cropped to 100 chars + "..."
+      responses:
+        "200":
+          description: Created shared link
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/SharedLinkWithCount" }
+        "400":
+          description: Missing highlight_ids or one or more ids don't belong to the authenticated user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /shared-links/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+
+    put:
+      summary: Toggle a shared link's active state
+      tags: [SharedLinks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [active]
+              properties:
+                active: { type: boolean }
+      responses:
+        "200":
+          description: Updated shared link
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/SharedLink" }
+        "400":
+          description: Validation error (active is required)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    delete:
+      summary: Delete a shared link (also removes its highlight associations)
+      tags: [SharedLinks]
+      responses:
+        "200":
+          description: Deletion confirmation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          deleted: { type: boolean, example: true }
+                          id:      { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /shared/{uuid}:
+    parameters:
+      - name: uuid
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+
+    get:
+      summary: Publicly view a shared link's highlights (no authentication required)
+      tags: [SharedLinks]
+      security: []
+      responses:
+        "200":
+          description: Shared link metadata and its highlights
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/PublicSharedLink" }
+        "404":
+          description: Unknown uuid, inactive link, or expired link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /shared/{uuid}/visit:
+    parameters:
+      - name: uuid
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+
+    post:
+      summary: Record a view of a shared link (no authentication required)
+      tags: [SharedLinks]
+      security: []
+      responses:
+        "200":
+          description: Updated visit count
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          visits: { type: integer }
+        "404":
+          description: Unknown uuid, inactive link, or expired link
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ErrorResponse" }

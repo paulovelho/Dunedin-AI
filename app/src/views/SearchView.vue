@@ -16,6 +16,12 @@ function submit() {
   submittedAuthor.value = authorInput.value.trim();
   hasSearched.value = true;
 }
+
+function onAuthorClick(author: string) {
+  authorInput.value = author;
+  showAuthor.value = true;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 </script>
 
 <template>
@@ -50,7 +56,7 @@ function submit() {
     </div>
 
     <div v-if="hasSearched" class="results-wrap">
-      <HighlightList :q="submittedQ" :author="submittedAuthor" />
+      <HighlightList :q="submittedQ" :author="submittedAuthor" @author-click="onAuthorClick" />
     </div>
   </main>
 </template>
