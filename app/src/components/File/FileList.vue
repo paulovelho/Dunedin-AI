@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { api } from '../../lib/api';
 import { useAuth } from '../../composables/useAuth';
 import FileUploader from './FileUploader.vue';
@@ -14,6 +15,7 @@ interface FileRecord {
   created_at: string;
 }
 
+const router = useRouter();
 const { whenReady } = useAuth();
 
 const files = ref<FileRecord[]>([]);
@@ -71,7 +73,12 @@ onMounted(loadFiles);
 <template>
   <div class="clippings">
     <div class="clippings-header">
-      <h1 class="page-title">My Clippings</h1>
+      <div class="title-group">
+        <button class="btn-back" type="button" aria-label="Back to search" @click="router.push({ name: 'search' })">
+          &larr;
+        </button>
+        <h1 class="page-title">My Clippings</h1>
+      </div>
       <button class="btn-new" @click="showUpload = !showUpload">
         <span v-if="!showUpload">+ New Upload</span>
         <span v-else>✕ Cancel</span>
@@ -131,11 +138,32 @@ onMounted(loadFiles);
   justify-content: space-between;
 }
 
+.title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .page-title {
   font-size: 1.25rem;
   font-family: var(--font-typewriter);
   color: var(--color-text);
   margin: 0;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text);
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+.btn-back:hover {
+  color: var(--color-purple);
 }
 
 .btn-new {

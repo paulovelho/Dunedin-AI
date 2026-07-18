@@ -41,6 +41,46 @@ class HighlightApiControl extends MagratheaApiControl {
         ];
     }
 
+    public function Search(): array {
+        $userId = AuthControl::SessionUserId();
+        $q      = trim($_GET["q"]      ?? "");
+        $author = trim($_GET["author"] ?? "");
+        $page   = max(1, (int)($_GET["page"]  ?? 1));
+        $limit  = min(100, max(1, (int)($_GET["count"] ?? 20)));
+
+        if ($q === "" && $author === "") {
+            throw new MagratheaApiException("q or author is required", 400);
+        }
+
+        $where = "user_id = " . $userId;
+
+        if ($q !== "") {
+            $words = array_filter(preg_split('/\s+/', $q));
+            foreach ($words as $word) {
+                $where .= " AND text LIKE '%" . Query::Clean($word) . "%'";
+            }
+        }
+
+        if ($author !== "") {
+            $where .= " AND author LIKE '%" . Query::Clean($author) . "%'";
+        }
+
+        $query = Query::Select()
+            ->Obj(new Highlight())
+            ->Where($where)
+            ->Order("date DESC");
+
+        $total = 0;
+        $rows  = HighlightControl::RunPagination($query, $total, $page - 1, $limit);
+
+        return [
+            "page"  => $page,
+            "limit" => $limit,
+            "total" => $total,
+            "items" => array_map(fn($h) => $h->ToArray(), $rows),
+        ];
+    }
+
     public function Read($params = false): array {
         if (!is_array($params)) $params = [];
         $userId = AuthControl::SessionUserId();

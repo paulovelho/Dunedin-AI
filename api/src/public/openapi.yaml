@@ -1,0 +1,429 @@
+openapi: "3.0.3"
+info:
+  title: Dunedin AI API
+  description: Kindle/web highlights manager API
+  version: "1.0.0"
+
+servers:
+  - url: /api/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Firebase ID Token
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:           { type: integer }
+        firebase_uid: { type: string }
+        email:        { type: string, format: email }
+        display_name: { type: string }
+        photo_url:    { type: string, format: uri }
+        last_login:   { type: string, format: date-time }
+        active:       { type: boolean }
+        status:       { type: string }
+        created_at:   { type: string, format: date-time }
+        updated_at:   { type: string, format: date-time }
+
+    Note:
+      type: object
+      properties:
+        id:           { type: integer }
+        highlight_id: { type: integer }
+        user_id:      { type: integer }
+        note:         { type: string }
+        date:         { type: string, format: date-time }
+        created_at:   { type: string, format: date-time }
+        updated_at:   { type: string, format: date-time }
+
+    Highlight:
+      type: object
+      properties:
+        id:         { type: integer }
+        user_id:    { type: integer }
+        text:       { type: string }
+        origin:     { type: string }
+        author:     { type: string }
+        date:       { type: string, format: date-time }
+        hash:       { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    HighlightWithNotes:
+      allOf:
+        - $ref: "#/components/schemas/Highlight"
+        - type: object
+          properties:
+            notes:
+              type: array
+              items:
+                $ref: "#/components/schemas/Note"
+
+    File:
+      type: object
+      properties:
+        id:            { type: integer }
+        user_id:       { type: integer }
+        filename:      { type: string }
+        type:          { type: string, example: kindle3 }
+        imported_date: { type: string, format: date-time, nullable: true }
+        status:        { type: string, enum: [pending, imported, error] }
+        created_at:    { type: string, format: date-time }
+        updated_at:    { type: string, format: date-time }
+
+    SuccessEnvelope:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean, example: true }
+        data:    {}
+
+    ErrorResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error:   { type: string }
+        code:    { type: integer }
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid Firebase ID token
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      security: []
+      tags: [Auth]
+      responses:
+        "200":
+          description: API is up
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          status: { type: string, example: ok }
+
+  /me:
+    get:
+      summary: Get the authenticated user
+      tags: [Auth]
+      responses:
+        "200":
+          description: Authenticated user record
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /auth/login:
+    post:
+      summary: Record login (updates last_login) and return user
+      tags: [Auth]
+      responses:
+        "200":
+          description: User record after login timestamp update
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /highlights:
+    get:
+      summary: List highlights (paginated, filterable)
+      tags: [Highlights]
+      parameters:
+        - name: q
+          in: query
+          description: Full-text search on highlight text
+          schema: { type: string }
+        - name: author
+          in: query
+          description: Filter by author (partial match)
+          schema: { type: string }
+        - name: origin
+          in: query
+          description: Filter by exact origin/book title
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, minimum: 1, maximum: 100 }
+      responses:
+        "200":
+          description: Paginated list of highlights
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          page:  { type: integer }
+                          limit: { type: integer }
+                          items:
+                            type: array
+                            items: { $ref: "#/components/schemas/Highlight" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /highlights/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+
+    get:
+      summary: Get a single highlight with its notes
+      tags: [Highlights]
+      responses:
+        "200":
+          description: Highlight including notes array
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/HighlightWithNotes" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    delete:
+      summary: Delete a highlight
+      tags: [Highlights]
+      responses:
+        "200":
+          description: Deletion confirmation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          deleted: { type: boolean, example: true }
+                          id:      { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /highlights/{id}/notes:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Highlight ID
+        schema: { type: integer }
+
+    post:
+      summary: Add a note to a highlight
+      tags: [Notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [note]
+              properties:
+                note: { type: string, description: Note text }
+      responses:
+        "200":
+          description: Created note
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/Note" }
+        "400":
+          description: Validation error (note is required)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /notes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+
+    put:
+      summary: Update a note
+      tags: [Notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [note]
+              properties:
+                note: { type: string }
+      responses:
+        "200":
+          description: Updated note
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/Note" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    delete:
+      summary: Delete a note
+      tags: [Notes]
+      responses:
+        "200":
+          description: Deletion confirmation
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          deleted: { type: boolean, example: true }
+                          id:      { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /files:
+    get:
+      summary: List uploaded files for the authenticated user
+      tags: [Files]
+      responses:
+        "200":
+          description: Array of file records
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/File" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /files/upload:
+    post:
+      summary: Upload a Kindle clippings file
+      tags: [Files]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Kindle My Clippings.txt file
+      responses:
+        "200":
+          description: Created file record (status pending)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: { $ref: "#/components/schemas/File" }
+        "400":
+          description: No file provided
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /files/{id}/import:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+
+    post:
+      summary: Trigger import of an uploaded file into highlights
+      tags: [Files]
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data: {}
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "501":
+          description: Not yet implemented
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }

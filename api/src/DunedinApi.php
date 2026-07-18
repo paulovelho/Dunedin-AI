@@ -34,6 +34,7 @@ class DunedinApi extends MagratheaApi {
     private function Highlights() {
         $api = new HighlightApiControl();
         $this->Add("GET",    "highlights",      $api, "List",   true);
+        $this->Add("GET",    "search",          $api, "Search", true);
         $this->Add("GET",    "highlights/:id",  $api, "Read",   true);
         $this->Add("DELETE", "highlights/:id",  $api, "Delete", true);
     }

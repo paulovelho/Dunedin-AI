@@ -19,7 +19,7 @@ class DunedinAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\
     public function Initialize() {
         $this->SetTitle("Dunedin Admin");
         $this->SetPrimaryColor("#5a2672");
-        $this->SetAdminLogo(__DIR__ . "/../assets/logo.svg");
+        $this->SetAdminLogo(__DIR__ . "/../../assets/logo.svg");
     }
 
     public function Auth($user): bool {
@@ -37,6 +37,7 @@ class DunedinAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\
         $this->apiFeature = new ApiExplorer();
         $this->apiFeature->SetApi(new DunedinApi());
         $this->AddFeature($this->apiFeature);
+        $this->AddFeature(new SwaggerAdmin());
     }
 
     public function LoadConfig() {
@@ -61,7 +62,8 @@ class DunedinAdmin extends \Magrathea2\Admin\Admin implements \Magrathea2\Admin\
         $menu->Add($this->features["app-config"]->GetMenuItem());
 
         $menu->Add($menu->CreateTitle("Api"))
-             ->Add($this->apiFeature->GetMenuItem());
+             ->Add($this->apiFeature->GetMenuItem())
+             ->Add($this->GetMenuItem("SwaggerAdmin"));
 
         $menu->Add($menu->CreateTitle("Data"));
         $this->AddFeaturesMenu($menu);
